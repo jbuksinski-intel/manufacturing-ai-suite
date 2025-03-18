@@ -1,3 +1,13 @@
+# Contents
+
+- [Contents](#contents) 
+  - [Overview](#overview)
+  - [Features](#features)
+  - [How It Works](#how-it-works)
+  - [Prerequisites](#prerequisites)
+  - [Deploy Pallet Defect Detection Reference Implementation in the Kubernetes Node](#deploy-pallet-defect-detection-reference-implementation-in-the-kubernetes-node)
+  - [Troubleshooting](#troubleshooting)
+
 # Pallet Defect Detection Reference Implementation
 
 Connect video streams to multiple AI pipelines on a single industrial PC to detect the condition of pallets in a warehouse.
@@ -21,7 +31,7 @@ This reference implementation consists of three microservices: Edge Video Analyt
 
 You start the pallet defect detection pipeline with a REST request using Client URL (cURL). The REST request will return a pipeline instance ID. EVAM then sends the images with overlaid bounding boxes via gRPC to MDVM. EVAM also sends the images to S3 compliant storage. To retrieve statistics of the running pipelines, MDVM sends a REST STATUS call and displays the received details. Any desired AI model from the Model Registry Microservice can be pulled into EVAM and used for inference in the reference implementation.
 
-![Architecture and high-level representation of the flow of data through the architecture](./docs/user-guide/images/defect-detection-arch-diagram.png)
+![Architecture and high-level representation of the flow of data through the architecture](../docs/user-guide/images/defect-detection-arch-diagram.png)
 
 Figure 1: Architecture diagram
 
@@ -31,23 +41,28 @@ This reference implementation is built with these components:
 -   <a href="https://docs.edgeplatform.intel.com/visualization-microservice/user-guide/Overview.html">**Multimodal Data Visualization Microservice**</a> enables the visualization of video streams and time-series data.
 -   <a href="https://docs.edgeplatform.intel.com/model-registry-as-a-service/1.0.1/user-guide/Overview.html">**Model Registry Microservice**</a> provides a centralized repository that facilitates the management of AI models
 
-## Get Started
+## Prerequisites
 
-### Note: Refer this [README](./helm/README.md) for helm deployment on k8s. For docker compose based deployment, proceed with this document.
+- K8s installation on single or multi node must be done as pre-requisite to continue the following deployment. Note: The kubernetes cluster is set up with `kubeadm`, `kubectl` and `kubelet` packages on single and multi nodes with `v1.30.2`.
+  Refer to tutorials such as <https://adamtheautomator.com/installing-kubernetes-on-ubuntu> and many other
+  online tutorials to setup kubernetes cluster on the web with host OS as ubuntu 22.04.
+- For helm installation, refer to [helm website](https://helm.sh/docs/intro/install/)
+
+## Deploy Pallet Defect Detection Reference Implementation in the Kubernetes Node
 
 ### Step 1: Configure and update the environment variables
 
-1. Update the below fields in [.env](./.env)
+1. Update the below fields in [values](./values.yaml) 
 
     ``` sh
-    HOST_IP= # replace localhost with system IP example: HOST_IP=10.100.100.100
-    MR_PSQL_PASSWORD= # example: MR_PSQL_PASSWORD=intel1234
-    MR_MINIO_ACCESS_KEY= # example: MR_MINIO_ACCESS_KEY=intel1234
-    MR_MINIO_SECRET_KEY= # example: MR_MINIO_SECRET_KEY=intel1234
-    http_proxy= # example: http_proxy=http://proxy.example.com:891
-    https_proxy= # example: http_proxy=http://proxy.example.com:891
-    VISUALIZER_GRAFANA_USER= # example: VISUALIZER_GRAFANA_USER=admin
-    VISUALIZER_GRAFANA_PASSWORD= # example: VISUALIZER_GRAFANA_PASSWORD=password
+    HOST_IP: # replace localhost with system IP example: HOST_IP: 10.100.100.100
+    POSTGRES_PASSWORD: # example: POSTGRES_PASSWORD: intel1234
+    MINIO_ACCESS_KEY: # example: MINIO_ACCESS_KEY: intel1234
+    MINIO_SECRET_KEY: # example: MINIO_SECRET_KEY: intel1234
+    http_proxy: # example: http_proxy: http://proxy.example.com:891
+    https_proxy: # example: http_proxy: http://proxy.example.com:891
+    VISUALIZER_GRAFANA_USER: # example: VISUALIZER_GRAFANA_USER: admin
+    VISUALIZER_GRAFANA_PASSWORD: # example: VISUALIZER_GRAFANA_PASSWORD: password
     ```
 
 2. Update HOST_IP_where_MRaaS_is_running in [evam_config.json](./evam_config.json)
@@ -64,53 +79,64 @@ This reference implementation is built with these components:
 
 Follow this procedure to run the reference implementation. In a typical deployment, multiple cameras deliver video streams that are connected to AI pipelines to improve the detection and recognition accuracy. The following demonstrates running two AI pipelines and observing telemetry data from a Grafana* dashboard.
 
-1. Bring up the containers.
+1. Deploy helm chart
 
-         docker compose up -d
+    ```sh
+    helm install pdd-deploy . -n apps  --create-namespace
+    ```
 
-2. Start the pallet defect detection pipeline with the following Client URL (cURL) command. This pipeline is configured to run in a loop forever. This REST/cURL request will return a pipeline instance ID, which can be used as an identifier to query later the pipeline status or stop the pipeline instance. For example, a6d67224eacc11ec9f360242c0a86003.
+2. Verify all the pods and services are running:
 
-         curl localhost:8080/pipelines/user_defined_pipelines/pallet_defect_detection_mlops -X POST -H 'Content-Type: application/json' -d '{
-            "parameters": {
-               "detection-properties": {
-                     "model": "/home/pipeline-server/resources/models/geti/pallet_defect_detection/deployment/Detection/model/model.xml",
-                     "device": "CPU"
-               }
+    ```sh
+    kubectl get pods -n apps
+    kubectl get svc -n apps
+    ```
+
+3. Start the pallet defect detection pipeline with the following Client URL (cURL) command. This pipeline is configured to run in a loop forever. This REST/cURL request will return a pipeline instance ID, which can be used as an identifier to query later the pipeline status or stop the pipeline instance. For example, a6d67224eacc11ec9f360242c0a86003.
+
+    ``` sh
+    curl http://<host_system_ip_address>:30107/pipelines/user_defined_pipelines/pallet_defect_detection_mlops -X POST -H 'Content-Type: application/json' -d '{
+        "parameters": {
+            "detection-properties": {
+                    "model": "/home/pipeline-server/resources/models/geti/pallet_defect_detection/deployment/Detection/model/model.xml",
+                    "device": "CPU"
             }
-         }'
+        }
+    }'
+    ```
 
-3. Start another pallet defect detection pipeline with the following Client URL (cURL) command. This pipeline is not configured to run in a loop forever. This REST/cURL request will return a pipeline instance ID, which can be used as an identifier to query later the pipeline status or stop the pipeline instance. For example, a6d67224eacc11ec9f360242c0a86003.
+4. Start another pallet defect detection pipeline with the following Client URL (cURL) command. This pipeline is not configured to run in a loop forever. This REST/cURL request will return a pipeline instance ID, which can be used as an identifier to query later the pipeline status or stop the pipeline instance. For example, a6d67224eacc11ec9f360242c0a86003.
 
-         curl localhost:8080/pipelines/user_defined_pipelines/pallet_defect_detection -X POST -H 'Content-Type: application/json' -d '{
-            "source": {
-                  "uri": "file:///home/pipeline-server/resources/videos/warehouse.avi",
-                  "type": "uri"
-            },
-            "parameters": {
-               "detection-properties": {
-                     "model": "/home/pipeline-server/resources/models/geti/pallet_defect_detection/deployment/Detection/model/model.xml",
-                     "device": "CPU"
-               }
+    ``` sh
+    curl http://<host_system_ip_address>:30107/pipelines/user_defined_pipelines/pallet_defect_detection -X POST -H 'Content-Type: application/json' -d '{
+        "source": {
+                "uri": "file:///home/pipeline-server/resources/videos/warehouse.avi",
+                "type": "uri"
+        },
+        "parameters": {
+            "detection-properties": {
+                    "model": "/home/pipeline-server/resources/models/geti/pallet_defect_detection/deployment/Detection/model/model.xml",
+                    "device": "CPU"
             }
-         }'
+        }
+    }'
+    ```
+    **Note: Note the instance ID of this pipeline**
 
-   **Note: Note the instance ID of this pipeline**
+5. Go to Grafana dashboard on `http://<HOST_IP>:30101/` and login with credentials provided in `values.yaml` file. Click on `Dashboards -> Video Analytics Dashboard` on the left to see the telemetry data for both pipelines.
 
-4. Go to Grafana dashboard on `http://<HOST_IP>:3000/` and login with credentials provided in `.env` file. Click on `Dashboards -> Video Analytics Dashboard` on the left to see the telemetry data for both pipelines.
-
-   ![Example of a Grafana dashboard with telemetry data of two pipelines](./docs/user-guide/images/2_streams_grpc_visualization.png)
+   ![Example of a Grafana dashboard with telemetry data of two pipelines](../docs/user-guide/images/2_streams_grpc_visualization.png)
 
    Figure 1: Dashboard with telemetry data of two pipelines
 
    You can see boxes, shipping labels, and defects being detected. You have successfully run the reference implementation.
 
-5. Advanced details: You can also see the topics on which the results are published by going to `http://<HOST_IP>:5003/topics` and then using those topics to see the streams like so: Stream 1 @ `http://<HOST_IP>:5003/<topic_1>` and Stream 2 @ `http://<HOST_IP>:5003/<topic_2>`
+6. Advanced details: You can also see the topics on which the results are published by going to `http://<HOST_IP>:30108/topics` and then using those topics to see the streams like so: Stream 1 @ `http://<HOST_IP>:30108/<topic_1>` and Stream 2 @ `http://<HOST_IP>:30108/<topic_2>`
 
-6. Stop the 2nd pipeline using the instance ID noted in point #3 above, before proceeding with this documentation.
+7. Stop the 2nd pipeline using the instance ID noted in point #4 above, before proceeding with this documentation.
    ```shell
-   curl --location -X DELETE http://<HOST_IP>:8080/pipelines/{instance_id}
+   curl --location -X DELETE http://<HOST_IP>:30107/pipelines/{instance_id}
    ```
-
 
 ### Step 3: MLOps Flow: At runtime, download a new model from model registry and restart the pipeline with the new model.
 ```
@@ -130,7 +156,7 @@ Note: We have removed "model-instance-id=inst0" from the pallet_defect_detection
    You can utilize the generated `<path>/pallet_defect_detection.zip` as `<model_file_path.zip>` in the next step
 
 3. Upload a model file to Model Registry
-    ```shell
+   ```shell
    curl -L -X POST "http://<host_system_ip_address>:32002/models" \
    -H 'Content-Type: multipart/form-data' \
    -F 'name="YOLO_Test_Model"' \
@@ -145,12 +171,12 @@ Note: We have removed "model-instance-id=inst0" from the pallet_defect_detection
 
 4. Check instance ID of currently running pipeline and use it in the next command
    ```shell
-   curl --location -X GET http://<HOST_IP>:8080/pipelines/status
+   curl --location -X GET http://<HOST_IP>:30107/pipelines/status
    ```
 
 5. Download the files for a specific model from the model registry microservice and restart the running pipeline with the new model. Essentially, the running instance gets aborted and a new instance gets started.
    ```shell
-   curl 'http://<host_system_ip_address>:8080/pipelines/user_defined_pipelines/pallet_defect_detection_mlops/<instance_id_of_currently_running_pipeline>/models' \
+   curl 'http://<host_system_ip_address>:30107/pipelines/user_defined_pipelines/pallet_defect_detection_mlops/<instance_id_of_currently_running_pipeline>/models' \
    --header 'Content-Type: application/json' \
    --data '{
    "project_name": "pallet-defect-detection",
@@ -166,21 +192,20 @@ Note: We have removed "model-instance-id=inst0" from the pallet_defect_detection
     Note: The data above assumes there is a model in the registry that contains these properties. Note: The pipeline name that follows user_defined_pipelines, will affect the `deployment` folder name.
 
 
-6. View the output in Grafana: `http://<HOST_IP>:3000/`
+6. View the output in Grafana: `http://<HOST_IP>:30101/`
 
-
-   ![Example of a Grafana dashboard with telemetry data of restarted pipeline instance](./docs/user-guide/images/1_stream_grpc_visualization.png)
+   ![Example of a Grafana dashboard with telemetry data of restarted pipeline instance](../docs/user-guide/images/1_stream_grpc_visualization.png)
 
    Figure 2: Dashboard with telemetry data of restarted pipeline instance.
 
 7. You can also stop any running pipeline by using the pipeline instance "id"
    ```shell
-   curl --location -X DELETE http://<HOST_IP>:8080/pipelines/{instance_id}
+   curl --location -X DELETE http://<HOST_IP>:30107/pipelines/{instance_id}
    ```
 
 ### Step 4: EVAM S3 frame storage
 
-Follow this procedure to test the EVAM S3 storage using the docker.
+Follow this procedure to test the EVAM S3 storage using the helm.
 
 1. Install the pip package boto3 once if not installed with the following command
       > pip3 install boto3==1.36.17
@@ -188,9 +213,9 @@ Follow this procedure to test the EVAM S3 storage using the docker.
 
    ```python
    import boto3
-   url = "http://<HOST-IP>:8000"
-   user = "<value of MR_MINIO_ACCESS_KEY used in .env>"
-   password = "<value of MR_MINIO_SECRET_KEY used in .env>"
+   url = "http://<HOST-IP>:30800"
+   user = "<value of MINIO_ACCESS_KEY used in .env>"
+   password = "<value of MINIO_SECRET_KEY used in .env>"
    bucket_name = "ecgdemo"
 
    client= boto3.client(
@@ -207,7 +232,7 @@ Follow this procedure to test the EVAM S3 storage using the docker.
 3. Start the pipeline with the following cURL command. Ensure to give the correct path to the model as seen below. This example starts an AI pipeline.
 
    ```sh
-   curl localhost:8080/pipelines/user_defined_pipelines/pallet_defect_detection_s3write -X POST -H 'Content-Type: application/json' -d '{
+   curl http://<host_system_ip_address>:30107/pipelines/user_defined_pipelines/pallet_defect_detection_s3write -X POST -H 'Content-Type: application/json' -d '{
       "source": {
             "uri": "file:///home/pipeline-server/resources/videos/warehouse.avi",
             "type": "uri"
@@ -221,22 +246,26 @@ Follow this procedure to test the EVAM S3 storage using the docker.
    }'
    ```
 
-4. Go to MinIO console on `http://<HOST_IP>:8000/` and login with `MR_MINIO_ACCESS_KEY` and `MR_MINIO_SECRET_KEY` provided in `.env` file. After logging into console, you can go to `ecgdemo` bucket and check the frames stored.
+4. Go to MinIO console on `http://<HOST_IP>:30800/` and login with `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY` provided in `values.yml` file. After logging into console, you can go to  `ecgdemo` bucket and check the frames stored.
 
-   ![S3 minio image storage](./docs/user-guide/images/s3-minio-storage.png)
-
+   ![S3 minio image storage](../docs/user-guide/images/s3-minio-storage.png)
 
 ### Step 5: End the demonstration
 
 Follow this procedure to stop the reference implementation and end this demonstration.
 
-1. Stop the reference implementation with the following command.
+1. Stop the reference implementation with the following command that uninstalls the release pdd-deploy.
 
-         docker compose down -v
+    ```sh
+    helm uninstall pdd-deploy -n apps
+    ```
+    
 
-2. Confirm the containers are no longer running.
+2. Confirm the pods are no longer running.
 
-         docker ps
+    ```sh
+    kubectl get pods -n apps
+    ```
 
 
 ## Summary
@@ -248,13 +277,15 @@ In this guide, you installed and validated the Pallet Defect Detection Reference
 
 The following are options to help you resolve issues with the reference implementation.
 
+
 ### Grafana Dashboard
 The firewall may prevent you from viewing the video stream and metrics in the Grafana dashboard. Please disable the firewall using this command.
 
          sudo ufw disable
 
+
 ### Error Logs
 
 View the container logs using this command.
 
-         docker logs -f <CONTAINER_NAME>
+         kubectl logs -f <pod_name> -n apps
