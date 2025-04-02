@@ -1,109 +1,19 @@
-# Weld Porosity Sample Application
+# Get Started
 
-Prevent defects in real time with AI-powered monitoring.
+-   **Time to Complete:** 30 minutes
+-   **Programming Language:**  Python 3
 
-## Overview
+## Prerequisites for Target System
 
-AI and machine vision enable real-time detection of welding defects, ensuring immediate corrective action before issues escalate. By leveraging the right camera and computing hardware, a trained AI model continuously monitors the weld, halting the process the moment a defect is detected. Deep learning AI processes video data at frame rates far beyond human capability, delivering unmatched precision and reliability.
+-  11th Generation Intel® Core™ processor or above
+-  8 GB of memory minimum
+-  80 GB of storage space minimum
+-  Internet access
+-  Ubuntu* 22.04 LTS Desktop
 
-### Features
+## Configure and update the environment variables
 
-This sample application offers the following features:
-
--   High-speed data exchange with low-latency compute.
--   Real-time AI-assisted classification of defects during the welding process.
--   On-premise data processing for data privacy and efficient use of bandwidth.
--   Interconnected welding setups deliver analytics for quick and informed tracking and decision making.
-
-## How It Works
-
-This sample application consists of the following microservices: Edge Video Analytics Microservice (EVAM), Model Registry Microservice(MRaaS), MediaMTX server, Coturn server, Open Telemetry Collector, Prometheus, Postgres and Minio.
-
-You start the weld porosity classification pipeline with a REST request using Client URL (cURL). The REST request will return a pipeline instance ID. EVAM then sends the images with overlaid bounding boxes through webrtc protocol to webrtc browser client. This is done via the MediaMTX server used for signalling. Coturn server is used to facilitate NAT traversal and ensure that the webrtc stream is accessible on a non-native browser client and helps in cases where firewall is enabled. EVAM also sends the images to S3 compliant storage. The Open Telemetry Data exported by EVAM to Open Telemetry Collector is scraped by Prometheus and can be seen on Prometheus UI. Any desired AI model from the Model Registry Microservice (which can interact with Postgres, Minio and Geti Server for getting the model) can be pulled into EVAM and used for inference in the sample application.
-
-![Architecture and high-level representation of the flow of data through the architecture](./docs/user-guide/images/defect-detection-arch-diagram.png)
-
-Figure 1: Architecture diagram
-
-This sample application is built with the following Intel Edge AI Stack Microservices:
-
--   <a href="https://docs.edgeplatform.intel.com/edge-video-analytics-microservice/2.4.0/user-guide/Overview.html">**Edge Video Analytics Microservice (EVAM)**</a> is an interoperable containerized microservice based on Python for video ingestion and deep learning inferencing functions.
--   <a href="https://docs.edgeplatform.intel.com/model-registry-as-a-service/1.0.3/user-guide/Overview.html">**Model Registry Microservice**</a> provides a centralized repository that facilitates the management of AI models
-
-It also consists of the below Third-party microservices:
-
-- [MediaMTX Server](https://hub.docker.com/r/bluenviron/mediamtx)
-- [Coturn Server](https://hub.docker.com/r/coturn/coturn)
-- [Open telemetry Collector](https://hub.docker.com/r/otel/opentelemetry-collector-contrib)
-- [Prometheus](https://hub.docker.com/r/prom/prometheus)
-- [Postgres](https://hub.docker.com/_/postgres)
-- [Minio](https://hub.docker.com/r/minio/minio)
-
-## Get Started
-
-### Note: Refer this [README](./helm/README.md) for helm deployment on k8s. For docker compose based deployment, proceed with this document.
-
-### How to bring your own model and run this sample application (No need to run this section, it is just for your information)
-You can bring your own model and run this sample application the same way as how we bring in the weld porosity model as follows:
-
-1. The weld porosity model is placed as below in the repository under `models`. You can also find the input video file source for inference under `videos`.
-
-- resources/
-  - models/
-    - weld_porosity/
-      - weld_porosity_classification
-        - deployment
-          - Classification
-            - model
-              - model.bin
-              - model.xml
-  - videos/
-    - welding.avi
-
-2. The `resources` folder containing both the model and video file is volume mounted into EVAM in [docker-compose.yml](./docker-compose.yml) as follows:
-
-    ```sh
-    volumes:
-    - ./resources/:/home/pipeline-server/resources/
-    ```
-
-3. Since this is a classification model, ensure to use gvaclassify in the pipeline. For example: See the `weld_porosity_classification` pipeline [evam_config.json](./configs/evam_config.json) where gvaclassify is used.
-
-4. The [evam_config.json](./configs/evam_config.json) is volume mounted into EVAM in [docker-compose.yml](./docker-compose.yml) as follows:
-
-    ```sh
-    volumes:
-    - ./configs/evam_config.json:/home/pipeline-server/config.json
-    ```
-
-4. Provide the model path and video file path in the REST/curl command for starting an inferencing workload with `<HOST_IP>` set to system IP. Example:
-    ```sh
-    curl http://<HOST_IP>:8080/pipelines/user_defined_pipelines/weld_porosity_classification -X POST -H 'Content-Type: application/json' -d '{
-        "source": {
-            "uri": "file:///home/pipeline-server/resources/videos/welding.avi",
-            "type": "uri"
-        },
-        "destination": {
-            "frame": {
-                "type": "webrtc",
-                "peer-id": "samplestream"
-            }
-        },
-        "parameters": {
-            "classification-properties": {
-                "model": "/home/pipeline-server/resources/models/weld_porosity/weld_porosity_classification/deployment/Classification/model/model.xml",
-                "device": "CPU"
-            }
-        }
-    }'
-    ```
-
-5. Please follow the rest of this document to get a hands-on experience in working with this sample application.
-
-
-### Step 1: Configure and update the environment variables
-
-1. Update the below fields in [.env](./.env)
+1. Update the below fields in `.env` file present at the root of the repository.
 
     ``` sh
     HOST_IP= # replace localhost with system IP example: HOST_IP=10.100.100.100
@@ -116,7 +26,7 @@ You can bring your own model and run this sample application the same way as how
     MTX_WEBRTCICESERVERS2_0_PASSWORD= # example: MTX_WEBRTCICESERVERS2_0_PASSWORD=mypassword
     ```
 
-2. Update HOST_IP_where_MRaaS_is_running in [evam_config.json](./configs/evam_config.json)
+2. Update HOST_IP_where_MRaaS_is_running in `evam_config.json` file present in the repository inside the `configs` folder.
 
     ```shell
          "model_registry": {
@@ -126,7 +36,7 @@ You can bring your own model and run this sample application the same way as how
         },
     ```
 
-### Step 2: Run multiple AI pipelines
+## Run multiple AI pipelines
 
 Follow this procedure to run the sample application. In a typical deployment, multiple cameras deliver video streams that are connected to AI pipelines to improve the classification and recognition accuracy.
 
@@ -134,7 +44,8 @@ Follow this procedure to run the sample application. In a typical deployment, mu
 
          docker compose up -d
 
-2. Start the weld porosity classification pipeline with the following Client URL (cURL) command by replacing the `<peer-str-id>` with a string id eg: `weld` and `<HOST_IP>` with the system IP. This pipeline is configured to run in a loop forever. This REST/cURL request will return a pipeline instance ID, which can be used as an identifier to query later the pipeline status or stop the pipeline instance. For example, a6d67224eacc11ec9f360242c0a86003.
+2. Start the weld porosity classification pipeline with the following Client URL (cURL) command by replacing the `<peer-str-id>` with a string id eg: `weld` and with `<HOST_IP>` set to system IP. This pipeline is configured to run in a loop forever. This REST/cURL request will return a pipeline instance ID, which can be used as an identifier to query later the pipeline status or stop the pipeline instance. For example, a6d67224eacc11ec9f360242c0a86003.
+
 
     ``` sh
     curl http://<HOST_IP>:8080/pipelines/user_defined_pipelines/weld_porosity_classification_mlops -X POST -H 'Content-Type: application/json' -d '{
@@ -153,7 +64,7 @@ Follow this procedure to run the sample application. In a typical deployment, mu
     }'
     ```
 
-3. Start another weld porosity classification pipeline with the following Client URL (cURL) command by replacing the `<different-peer-str-id>` with a different string id than the one in above step. eg: `weldstream` and `<HOST_IP>` with the system IP. This pipeline is not configured to run in a loop forever. This REST/cURL request will return a pipeline instance ID, which can be used as an identifier to query later the pipeline status or stop the pipeline instance. For example, a6d67224eacc11ec9f360242c0a86003.
+3. Start another weld porosity classification pipeline with the following Client URL (cURL) command by replacing the `<different-peer-str-id>` with a different string id than the one in above step. eg: `weldstream` and with `<HOST_IP>` set to system IP. This pipeline is not configured to run in a loop forever. This REST/cURL request will return a pipeline instance ID, which can be used as an identifier to query later the pipeline status or stop the pipeline instance. For example, a6d67224eacc11ec9f360242c0a86003.
 
     ``` sh
     curl http://<HOST_IP>:8080/pipelines/user_defined_pipelines/weld_porosity_classification -X POST -H 'Content-Type: application/json' -d '{
@@ -177,9 +88,9 @@ Follow this procedure to run the sample application. In a typical deployment, mu
     ```
    **Note: Note the instance ID of this pipeline**
 
-4. View the WebRTC streaming on `http://<HOST_IP>:<mediamtx-port>/<peer-str-id>` and `http://<HOST_IP>:<mediamtx-port>/<different-peer-str-id>` by updating `<HOST_IP>` with the system IP. `mediamtx-port` in this case would be 8889 as configured in .env file
+4. View the WebRTC streaming on `http://<HOST_IP>:<mediamtx-port>/<peer-str-id>` and `http://<HOST_IP>:<mediamtx-port>/<different-peer-str-id>`. `mediamtx-port` in this case would be 8889 as configured in .env file
 
-   ![Example of a WebRTC streaming using default mediatx-port 31111](./docs/user-guide/images/webrtc-streaming.png)
+   ![Example of a WebRTC streaming using default mediatx-port 31111](./images/webrtc-streaming.png)
 
    Figure 1: WebRTC streaming
 
@@ -191,11 +102,10 @@ Follow this procedure to run the sample application. In a typical deployment, mu
    ```
 
 
-### Step 3: MLOps Flow: At runtime, download a new model from model registry and restart the pipeline with the new model.
+## MLOps Flow: At runtime, download a new model from model registry and restart the pipeline with the new model.
 ```
 Note: We have removed "model-instance-id=inst0" from the weld_porosity_classification_mlops pipeline in evam_config.json to ensure the proper loading of the new AI model in the MLOps flow. However, as a general rule, keeping "model-instance-id=inst0" in a pipeline is recommended for better performance if you are running multiple instances of the same pipeline.
 ```
-
 1. Get all the registered models in the model registry
     ```shell
     curl -X GET 'http://<HOST_IP>:32002/models'
@@ -246,9 +156,9 @@ Note: We have removed "model-instance-id=inst0" from the weld_porosity_classific
 
     Note: The data above assumes there is a model in the registry that contains these properties. Note: The pipeline name that follows user_defined_pipelines, will affect the `deployment` folder name.
 
-6. View the WebRTC streaming on `http://<HOST_IP>:<mediamtx-port>/<peer-str-id>` by replacing `<peer-str-id>` with the value used in the cURL command to start the pipeline.
+6. View the WebRTC streaming on `http://<HOST_IP>:<mediamtx-port>/<peer-str-id>` by replacing `<peer-str-id>` with the value used in the cURL command to start the pipeline with `<HOST_IP>` set to system IP.
 
-   ![Example of a WebRTC streaming using default mediatx-port 31111](./docs/user-guide/images/webrtc-streaming.png)
+   ![Example of a WebRTC streaming using default mediatx-port 31111](./images/webrtc-streaming.png)
 
    Figure 2: WebRTC streaming
 
@@ -257,8 +167,7 @@ Note: We have removed "model-instance-id=inst0" from the weld_porosity_classific
    curl --location -X DELETE http://<HOST_IP>:8080/pipelines/{instance_id}
    ```
 
-### Step 4: EVAM S3 frame storage
-
+## EVAM S3 frame storage
 Follow this procedure to test the EVAM S3 storage using the docker.
 
 1. Install the pip package boto3 once if not installed with the following command
@@ -283,7 +192,7 @@ Follow this procedure to test the EVAM S3 storage using the docker.
    print("Buckets:", [b["Name"] for b in buckets.get("Buckets", [])])
    ```
 
-3. Start the pipeline with the following cURL command with the `<HOST_IP>` set to system IP. Ensure to give the correct path to the model as seen below. This example starts an AI pipeline.
+3. Start the pipeline with the following cURL command with `<HOST_IP>` set to system IP. Ensure to give the correct path to the model as seen below. This example starts an AI pipeline.
 
    ```sh
    curl http://<HOST_IP>:8080/pipelines/user_defined_pipelines/weld_porosity_classification_s3write -X POST -H 'Content-Type: application/json' -d '{
@@ -308,10 +217,9 @@ Follow this procedure to test the EVAM S3 storage using the docker.
 
 4. Go to MinIO console on `http://<HOST_IP>:8000/` and login with `MR_MINIO_ACCESS_KEY` and `MR_MINIO_SECRET_KEY` provided in `.env` file. After logging into console, you can go to `ecgdemo` bucket and check the frames stored.
 
-   ![S3 minio image storage](./docs/user-guide/images/s3-minio-storage.png)
+   ![S3 minio image storage](./images/s3-minio-storage.png)
 
-### Step 5: View Open Telemetry Data
-
+## View Open Telemetry Data
 EVAM supports gathering metrics over Open Telemetry. The supported metrics currently are:
 - `cpu_usage_percentage`: Tracks CPU usage percentage of EVAM python process
 - `memory_usage_bytes`: Tracks memory usage in bytes of EVAM python process
@@ -323,39 +231,31 @@ EVAM supports gathering metrics over Open Telemetry. The supported metrics curre
     - `fps_per_pipeline{}`
         - If you are starting multiple pipelines, then it can also be queried per pipeline ID. Example: `fps_per_pipeline{pipeline_id="658a5260f37d11ef94fc0242ac160005"}`
 
-    ![Open telemetry fps_per_pipeline example in prometheus](./docs/user-guide/images/prometheus_fps_per_pipeline.png)
+    ![Open telemetry fps_per_pipeline example in prometheus](./images/prometheus_fps_per_pipeline.png)
 
-### Step 6: End the demonstration
-
+## End the demonstration
 Follow this procedure to stop the sample application and end this demonstration.
-
 1. Stop the sample application with the following command.
-
          docker compose down -v
-
 2. Confirm the containers are no longer running.
-
          docker ps
 
-
 ## Summary
+In this guide, you installed and validated the Weld Porosity Sample Application. You also completed a demonstration where multiple pipelines run on a single system with near real-time defect classification, saw the MLOps flow and S3 frame storage as well. You also saw the Open Telemetry data over a web dashboard.
 
-In this guide, you installed and validated the Weld Porosity Sample Application. You also completed a demonstration where multiple pipelines run on a single system with near real-time defect classification.
-
+## Advanced Setup Options
+For alternative ways to set up the microservice, see:
+- [How to Deploy with Helm](./how-to-deploy-with-helm.md)
 
 ## Troubleshooting
-
 The following are options to help you resolve issues with the sample application.
 
 ### WebRTC Stream on web browser
 The firewall may prevent you from viewing the video stream on web browser. Please disable the firewall using this command.
-
          sudo ufw disable
 
 ### Error Logs
-
 View the container logs using this command.
-
          docker logs -f <CONTAINER_NAME>
 
 ### Resolving Time Sync Issues in Prometheus
@@ -397,3 +297,8 @@ You can following the below steps to synchronize system time using NTP.
    ```
 
 This should resolve the time discrepancy in Prometheus.
+
+## Supporting Resources
+* [Overview](Overview.md)
+* [API Reference](api-reference.md)
+* [System Requirements](system-requirements.md)
