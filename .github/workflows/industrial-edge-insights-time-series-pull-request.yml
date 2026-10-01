@@ -1,0 +1,166 @@
+#
+# Apache v2 license
+# Copyright (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+#
+name: "[Industrial Edge Insights Time Series and Multimodal] PR workflow"
+run-name: "[Industrial Edge Insights Time Series and Multimodal] PR workflow (by @${{ github.actor }} via ${{ github.event_name }})"
+on:
+  pull_request:
+    paths:
+      - 'manufacturing-ai-suite/industrial-edge-insights-time-series/**'
+      - 'manufacturing-ai-suite/industrial-edge-insights-multimodal/**'
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  industrial-edge-insights-time-series-pre-merge-build:
+    permissions:
+      contents: read
+      packages: read          # needed for actions/checkout
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Runner workspace path
+      run: |
+        echo "Cleaning up previous run"
+        if [ -n "$(docker ps -aq)" ]; then
+            docker stop $(docker ps -aq)
+        fi
+        if [ -n "$(docker ps -aq)" ]; then
+            docker rm $(docker ps -aq)
+        fi
+        docker images --quiet --filter=dangling=true | xargs --no-run-if-empty docker rmi -f
+    - name: Checkout edge-ai-libraries (main)
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        repository: open-edge-platform/edge-ai-libraries
+        ref: main
+        path: edge-ai-libraries
+        persist-credentials: false
+    - name: Building Time Series Analytics microservices
+      run: |
+        cd ./edge-ai-libraries/microservices/time-series-analytics/docker
+        docker compose down -v 
+        docker compose build
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+          path: timeseries
+          persist-credentials: false
+    - name: Building Time Series Sample App
+      run: |
+        cd ./timeseries/manufacturing-ai-suite/industrial-edge-insights-time-series
+        make down 
+        # Generate random values for sensitive environment variables
+        INFLUXDB_USERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
+        base=$(tr -dc 'a-zA-Z' </dev/urandom | head -c9)
+        digit=$(tr -dc '0-9' </dev/urandom | head -c1)
+        pos=$((RANDOM % 10))
+        INFLUXDB_PASSWORD=${base:0:$pos}${digit}${base:$pos}
+        VISUALIZER_GRAFANA_USER=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
+        VISUALIZER_GRAFANA_PASSWORD=${base:0:$pos}${digit}${base:$pos}
+
+        sed -i "s/INFLUXDB_USERNAME=.*/INFLUXDB_USERNAME=${INFLUXDB_USERNAME}/g" .env
+        sed -i "s/INFLUXDB_PASSWORD=.*/INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD}/g" .env
+        sed -i "s/VISUALIZER_GRAFANA_USER=.*/VISUALIZER_GRAFANA_USER=${VISUALIZER_GRAFANA_USER}/g" .env
+        sed -i "s/VISUALIZER_GRAFANA_PASSWORD=.*/VISUALIZER_GRAFANA_PASSWORD=${VISUALIZER_GRAFANA_PASSWORD}/g" .env
+        make build
+    - name: Deploying Wind Turbine Anomaly Detection Sample App
+      run: |
+        cd "${{ github.workspace }}"
+        cd ./timeseries/manufacturing-ai-suite/industrial-edge-insights-time-series
+        echo "Deploying Wind Turbine Anomaly Detection Sample App"
+        echo "Deploying using mqtt ingestion"
+        make up_mqtt_ingestion app=wind-turbine-anomaly-detection
+        timeout 30s bash -c '
+          docker logs -f ia-time-series-analytics-microservice 2>&1 |
+          while read -r line; do
+            echo "$line"
+            if [[ "$line" == *"Kapacitor Tasks Enabled Successfully"* ]]; then
+              exit 0
+            fi
+          done
+        '
+
+        if [[ $? -eq 0 ]]; then
+            echo "✅ Found success log"
+        else
+            echo "❌ Not found within 30s"
+            exit 1
+        fi
+        echo "Deploying using opcua ingestion"
+        make up_opcua_ingestion app=wind-turbine-anomaly-detection
+        timeout 30s bash -c '
+          docker logs -f ia-time-series-analytics-microservice 2>&1 |
+          while read -r line; do
+            echo "$line"
+            if [[ "$line" == *"Kapacitor Tasks Enabled Successfully"* ]]; then
+              exit 0
+            fi
+          done
+        '
+
+        if [[ $? -eq 0 ]]; then
+            echo "✅ Found success log"
+        else
+            echo "❌ Not found within 30s"
+            exit 1
+        fi
+    - name: Undeploying Wind Turbine Anomaly Detection Sample App
+      run: |
+        cd "${{ github.workspace }}"
+        cd ./timeseries/manufacturing-ai-suite/industrial-edge-insights-time-series
+        make down
+
+    - name: Building Multimodal Sample App
+      run: |
+        cd ./timeseries/manufacturing-ai-suite/industrial-edge-insights-multimodal
+        make down 
+        # Generate random values for sensitive environment variables
+        INFLUXDB_USERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
+        base=$(tr -dc 'a-zA-Z' </dev/urandom | head -c9)
+        digit=$(tr -dc '0-9' </dev/urandom | head -c1)
+        pos=$((RANDOM % 10))
+        INFLUXDB_PASSWORD=${base:0:$pos}${digit}${base:$pos}
+        VISUALIZER_GRAFANA_USER=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
+        VISUALIZER_GRAFANA_PASSWORD=${base:0:$pos}${digit}${base:$pos}
+        MTX_WEBRTCICESERVERS2_0_USERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
+        MTX_WEBRTCICESERVERS2_0_PASSWORD=$(openssl rand -hex 10)
+        HOST_IP=$(hostname -I | awk '{print $1}')
+        S3_STORAGE_USERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
+        S3_STORAGE_PASSWORD=$(openssl rand -hex 10)
+
+        sed -i "s/INFLUXDB_USERNAME=.*/INFLUXDB_USERNAME=${INFLUXDB_USERNAME}/g" .env
+        sed -i "s/INFLUXDB_PASSWORD=.*/INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD}/g" .env
+        sed -i "s/VISUALIZER_GRAFANA_USER=.*/VISUALIZER_GRAFANA_USER=${VISUALIZER_GRAFANA_USER}/g" .env
+        sed -i "s/VISUALIZER_GRAFANA_PASSWORD=.*/VISUALIZER_GRAFANA_PASSWORD=${VISUALIZER_GRAFANA_PASSWORD}/g" .env
+        sed -i "s/MTX_WEBRTCICESERVERS2_0_USERNAME=.*/MTX_WEBRTCICESERVERS2_0_USERNAME=${MTX_WEBRTCICESERVERS2_0_USERNAME}/g" .env
+        sed -i "s/MTX_WEBRTCICESERVERS2_0_PASSWORD=.*/MTX_WEBRTCICESERVERS2_0_PASSWORD=${MTX_WEBRTCICESERVERS2_0_PASSWORD}/g" .env
+        sed -i "s/S3_STORAGE_USERNAME=.*/S3_STORAGE_USERNAME=${S3_STORAGE_USERNAME}/g" .env
+        sed -i "s/S3_STORAGE_PASSWORD=.*/S3_STORAGE_PASSWORD=${S3_STORAGE_PASSWORD}/g" .env
+        sed -i "s/HOST_IP=.*/HOST_IP=${HOST_IP}/g" .env
+        make build
+    - name: Deploying Multimodal Weld Defect Detection Sample App
+      run: |
+        cd "${{ github.workspace }}"
+        cd ./timeseries/manufacturing-ai-suite/industrial-edge-insights-multimodal
+        echo "Deploying Multimodal Weld Defect Detection Sample App"
+        make up
+    - name: Undeploying Multimodal Weld Defect Detection Sample App
+      run: |
+        cd "${{ github.workspace }}"
+        cd ./timeseries/manufacturing-ai-suite/industrial-edge-insights-multimodal
+        make down
+
+  industrial-edge-insights-time-series-scans:
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+      actions: read
+    uses: ./.github/workflows/industrial-edge-insights-time-series-scans.yml
+    with:
+      target: all-scans
