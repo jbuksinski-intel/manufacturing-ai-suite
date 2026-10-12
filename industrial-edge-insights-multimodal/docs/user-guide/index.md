@@ -63,13 +63,13 @@ The following components are deployed by default through `docker-compose.yml`:
 
 | Component | Role | Enabled via |
 |---|---|---|
-| vLLM (OpenVINO-optimized) + Insights Workbench | Generates an AI text explanation of a detected weld defect from vision/sensor context | `docker-compose-vllm.yml` — [Deploy vLLM Service](./how-to-guides/how-to-deploy-vllm-service.md) |
-| Agentic workflow: `apm-agent` (LangGraph meta-agent: Policy, Analysis, Ticketing agents) | Reasons over fusion results and produces root-cause analysis and structured maintenance tickets — this is the "Ops/Maintenance Co-pilot" behavior | `docker-compose-agentic.yml` — [Deploy the Agentic Workflow](./how-to-guides/how-to-deploy-agent-workflow.md) |
+| vLLM (OpenVINO-optimized) | Generates an AI text explanation of a detected weld defect from vision/sensor context | `docker-compose-vllm.yml` — [Deploy vLLM Service](./how-to-guides/how-to-deploy-vllm-service.md) |
+| Agentic workflow: `apm-agent` (LangGraph meta-agent: Policy, Analysis, Ticketing agents) | Reasons over fusion results and produces root-cause analysis and structured maintenance tickets — this is the "Ops/Maintenance Co-pilot" behavior | `docker-compose-agentic.yml`, combined with `docker-compose-vllm.yml` (`make up_agentic` runs both) — [Deploy the Agentic Workflow](./how-to-guides/how-to-deploy-agent-workflow.md) |
 | OpenVINO™ Model Server (OVMS) | Serves the LLM consumed by the agentic workflow (`apm-llm`) | `docker-compose-agentic.yml` |
 | Model Download microservice | Downloads the model(s) used by the agentic workflow (`apm-model-download`) | `docker-compose-agentic.yml` |
 | Metrics Collector, Prometheus | Collects agentic workflow metrics (`apm-metrics`, `apm-prometheus`) | `docker-compose-agentic.yml` |
-| Agentic UI (`multimodal-agentic-ui`) | Web UI for triggering and reviewing agentic weld quality analysis runs | `docker-compose-agentic.yml` |
-| Intel® Geti™ Software | Used offline to train and export the weld defect classification model as OpenVINO™ IR | [How to Fine-Tune a VLM](./how-to-guides/how-to-fine-tune-vlm.md), model README under `configs/dlstreamer-pipeline-server/models/` |
+| `multimodal-agentic-ui` web UI | Same web UI container for both modes: shows the defect-explanation view in vLLM-only mode, or the full trigger/monitoring dashboard when `AGENTIC_UI_ENABLED=true` for the agentic workflow | `docker-compose-vllm.yml` |
+| Intel® Geti™ Software | Used offline to train and export the weld defect classification model as OpenVINO™ IR | [How to Fine-Tune a VLM](./how-to-guides/how-to-fine-tune-vlm-weld-usecase.md), model README under `configs/dlstreamer-pipeline-server/models/` |
 | PyTorch (training only) | Used offline for VLM fine-tuning (LoRA adapters for defect explainability) — not part of the deployed containers | [training/vlm-fine-tuning](../../training/vlm-fine-tuning/README.md) |
 | Helm / Kubernetes | Alternative deployment path for the core (non-agentic, non-vLLM) stack | [Deploy with Helm](./get-started/deploy-with-helm.md) |
 
