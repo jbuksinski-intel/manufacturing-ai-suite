@@ -5,7 +5,7 @@ Users can refer to one of many samples built from the template as a reference.
 
 By adding minimal application specific prerequisites, this template can help you successfully deploy your application on the edge.
 
-Both Docker Compose based as well as Helm based deployments are supported by this application template.
+Docker Compose based deployments are supported by this application template.
 
 ## Description
 
@@ -26,7 +26,7 @@ It consists of the following microservices:
 </div>
 
 > [!NOTE]
-> Although not part of the application configuration files such as Docker Compose or Helm templates, Model Download microservice helps downloading OpenVINO™ and Geti™ trained models that are used by DL Streamer Pipeline Server to demonstrate MLOps flow.
+> Although not part of the application configuration files such as Docker Compose templates, Model Download microservice helps downloading OpenVINO™ and Geti™ trained models that are used by DL Streamer Pipeline Server to demonstrate MLOps flow.
 
 ### Directory structure
 
@@ -40,15 +40,6 @@ The following directory structure, consisting of generic deployment code as well
                 pipeline-server-config.json
             setup.sh
             payload.json
-
-    helm/
-        apps/
-            application_name/
-                setup.sh
-                payload.json
-                pipeline-server-config.json
-        templates/
-        values.yaml
 
     resources/
         application_name/
@@ -73,8 +64,6 @@ The following directory structure, consisting of generic deployment code as well
             prerequisite installer to setup envs, download artifacts such as models/videos to `resources/` directory. It also sets executable permissions for scripts.
     - `payload.json`:
             A JSON array file containing one or more request(s) to be sent to DL Streamer Pipeline Server to launch GStreamer pipeline(s). The payload data is associated with the `configs/pipeline-server-config.json` provided for that application. Each JSON inside the array has two keys- `pipeline` and `payload` that refers to the pipeline it belongs to and the payload used to launch an instance of the pipeline.
-
- - **Helm**: contains Helm charts and application specific prerequisite installers, configurations and runtime data. The configs and data within it are similar to **apps** but are kept here for easy packaging.
 
  - **resources**: This directory and its subdirectories are created only after installation is done by running `setup.sh` for that application. It contains artifacts such as models, videos, etc. Users can modify their application's `setup.sh` script to download artifacts as per their usecase requirements.
 
