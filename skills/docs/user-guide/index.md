@@ -8,10 +8,10 @@
 
 <!--hide_directive
 <div class="component_card_widget">
-  <a class="icon_github" href="https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/.github/skills">
+  <a class="icon_github" href="https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/.github/skills">
      GitHub
   </a>
-  <a class="icon_document" href="https://github.com/open-edge-platform/manufacturing-ai-suite/blob/main/README.md">
+  <a class="icon_document" href="https://github.com/open-edge-platform/manufacturing-ai-suite/blob/release-2026.3.0/README.md">
      Readme
   </a>
 </div>
@@ -37,7 +37,7 @@ technical decision to the orchestrator skill.
    "predict a pump failure" or "catch defective welds". Alternatively, describe your goal in your
    own words.
 2. **The orchestrator takes over.** The
-   [`manufacturing-ai-app-builder`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/.github/skills/manufacturing-ai-app-builder)
+   [`manufacturing-ai-app-builder`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/.github/skills/manufacturing-ai-app-builder)
    skill runs a short business Q&A. It asks for:
    - the outcome you want
    - what feeds the decision: a camera, a sensor, or both
@@ -93,7 +93,7 @@ I want to <state the business outcome in one or two sentences>.
 Use the manufacturing-ai-app-builder skill to guide this process. Install and
 invoke it:
 
-npx skills@1.7.4 add https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/.github/skills/manufacturing-ai-app-builder
+npx skills@1.7.4 add https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/.github/skills/manufacturing-ai-app-builder
 ```
 
 Keep the prompt business-only. Describe what you want to achieve, not which model, framework,
@@ -172,10 +172,10 @@ The suite ships these skills. The orchestrator uses the first two. You can also 
 
 | Skill | Use it to |
 | --- | --- |
-| [`manufacturing-ai-app-builder`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/.github/skills/manufacturing-ai-app-builder) | Turn a business objective into a plan and delegate the build. |
-| [`manufacturing-app-recipe`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/.github/skills/manufacturing-app-recipe) | Stand up a vision, time-series, multimodal, VLM, or agentic stack with Docker Compose. |
-| [`multimodal-deploy`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/industrial-edge-insights-multimodal/.github/skills/multimodal-deploy) | Build, deploy, and test the Multimodal Weld Defect Detection sample application. |
-| [`time-series-deploy`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/industrial-edge-insights-time-series/.github/skills/time-series-deploy) | Build, deploy, and test the Time Series sample applications, such as wind-turbine anomaly detection. |
+| [`manufacturing-ai-app-builder`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/.github/skills/manufacturing-ai-app-builder) | Turn a business objective into a plan and delegate the build. |
+| [`manufacturing-app-recipe`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/.github/skills/manufacturing-app-recipe) | Stand up a vision, time-series, multimodal, VLM, or agentic stack with Docker Compose. |
+| [`multimodal-deploy`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/industrial-edge-insights-multimodal/.github/skills/multimodal-deploy) | Build, deploy, and test the Multimodal Weld Defect Detection sample application. |
+| [`time-series-deploy`](https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/industrial-edge-insights-time-series/.github/skills/time-series-deploy) | Build, deploy, and test the Time Series sample applications, such as wind-turbine anomaly detection. |
 
 To install a skill, pass the URL of its folder to `npx skills`:
 

@@ -2,10 +2,10 @@
 
 <!--hide_directive
 <div class="component_card_widget">
-  <a class="icon_github" href="https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/industrial-edge-insights-vision/apps/pcb-anomaly-detection">
+  <a class="icon_github" href="https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/industrial-edge-insights-vision/apps/pcb-anomaly-detection">
      GitHub
   </a>
-  <a class="icon_document" href="https://github.com/open-edge-platform/manufacturing-ai-suite/blob/main/industrial-edge-insights-vision/apps/pcb-anomaly-detection/README.md">
+  <a class="icon_document" href="https://github.com/open-edge-platform/manufacturing-ai-suite/blob/release-2026.3.0/industrial-edge-insights-vision/apps/pcb-anomaly-detection/README.md">
      Readme
   </a>
 </div>

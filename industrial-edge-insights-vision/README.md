@@ -87,7 +87,7 @@ The shell scripts starting with `sample_*.sh` eases interaction with DL Streamer
 
 Ensure that you have the correct version of the DL Streamer Pipeline Server image as specified in the [Compose](./docker-compose.yml) deployment file.
 To build DL Streamer Pipeline Server, refer to
-[the instructions](https://github.com/open-edge-platform/edge-ai-libraries/tree/main/microservices/dlstreamer-pipeline-server#build-from-source).
+[the instructions](https://github.com/open-edge-platform/edge-ai-libraries/tree/release-2026.3.0/microservices/dlstreamer-pipeline-server#build-from-source).
 
 ## Getting Started
 

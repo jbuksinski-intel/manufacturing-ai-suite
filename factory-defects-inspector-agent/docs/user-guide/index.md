@@ -8,10 +8,10 @@
 
 <!--hide_directive
 <div class="component_card_widget">
-  <a class="icon_github" href="https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/factory-defects-inspector-agent">
+  <a class="icon_github" href="https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/factory-defects-inspector-agent">
      GitHub
   </a>
-  <a class="icon_document" href="https://github.com/open-edge-platform/manufacturing-ai-suite/blob/main/factory-defects-inspector-agent/README.md">
+  <a class="icon_document" href="https://github.com/open-edge-platform/manufacturing-ai-suite/blob/release-2026.3.0/factory-defects-inspector-agent/README.md">
      Readme
   </a>
 </div>

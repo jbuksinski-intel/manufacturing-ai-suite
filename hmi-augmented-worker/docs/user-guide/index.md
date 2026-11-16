@@ -2,10 +2,10 @@
 
 <!--hide_directive
 <div class="component_card_widget">
-  <a class="icon_github" href="https://github.com/open-edge-platform/manufacturing-ai-suite/tree/main/hmi-augmented-worker">
+  <a class="icon_github" href="https://github.com/open-edge-platform/manufacturing-ai-suite/tree/release-2026.3.0/hmi-augmented-worker">
      GitHub
   </a>
-  <a class="icon_document" href="https://github.com/open-edge-platform/manufacturing-ai-suite/blob/main/hmi-augmented-worker/README.md">
+  <a class="icon_document" href="https://github.com/open-edge-platform/manufacturing-ai-suite/blob/release-2026.3.0/hmi-augmented-worker/README.md">
      Readme
   </a>
 </div>
